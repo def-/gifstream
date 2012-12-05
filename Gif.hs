@@ -1,21 +1,32 @@
 {-# LANGUAGE OverloadedStrings #-} 
 
+module Gif (
+  img,
+  img2,
+  initialFrame,
+  frame,
+  finalize
+  )
+  where
+
 import Data.Char
 import qualified Data.ByteString as B
 
 main = do
-  B.writeFile "foo.gif" $ B.concat [initialFrame img, frame img2, finalize]
+  B.writeFile "foo.gif" $ B.concat [initialFrame 10 img, frame 10 img2, finalize]
 
 img :: [[(Int,Int,Int)]]
 img = take 64 $ repeat [(r,g,b) | r <- [0..3], g <- [0..3], b <- [0..3]]
+
+img2 :: [[(Int,Int,Int)]]
 img2 = take 64 $ repeat [(r,g,b) | r <- [0..3], g <- [0,0,0,0], b <- [0,0,0,0]]
 
-initialFrame img = B.concat
+initialFrame delay img = B.concat
   [ header
   , logicalScreenDescriptor
   , colortable
   , applicationExtension
-  , frame img
+  , frame delay img
   ]
   where -- http://www.onicos.com/staff/iz/formats/gif.html
     header      = "GIF89a"
@@ -37,10 +48,10 @@ initialFrame img = B.concat
 
     applicationExtension = "!\255\vNETSCAPE2.0\ETX\SOH\NUL\NUL\NUL"
 
-frame img = B.concat [graphicControlExtension, imageDescriptor, image]
+frame delay img = B.concat [graphicControlExtension, imageDescriptor, image]
   where
-    graphicControlExtension = B.concat ["!\249\EOT\b", delay, "\255", "\NUL"]
-    delay = number 100
+    graphicControlExtension = B.concat ["!\249\EOT\b", delayB, "\255", "\NUL"]
+    delayB = number delay
 
     image = B.concat [lzwMinSize, imageData, "\NUL"]
 
