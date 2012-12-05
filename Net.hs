@@ -39,7 +39,8 @@ loop sock = do
    --content <- B.readFile "foo.gif"
    (conn, _) <- accept sock
 
-   let body c = do sendAll c $ msg $ initialFrame delay img
+   let body c = do i <- readIORef state
+                   sendAll c $ msg $ initialFrame delay i
                    go c
                    sendAll c $ finalize
                    sClose c
