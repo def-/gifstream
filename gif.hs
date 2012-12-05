@@ -14,31 +14,27 @@ ct = realCT `B.append` dummyCT
 img :: [[(Int,Int,Int)]]
 img = take 64 $ repeat [(r,g,b) | r <- [0..3], g <- [0..3], b <- [0..3]]
 
---toGif img = gif (length $ head img) (length img) imageData
---  where
-
-toGif img = gif w h imageData imageData2
+toGif img = gif w h [imageData, imageData2]
   where
     w = length $ head img
     h = length img
+
     imageData = B.concat $ (map mapLines img)
-    imageData2 = B.concat $ (map mapLines2 img) ++ [imageEnd]
     mapLines x = B.concat [bytesToFollow, clear, B.pack $ map (\(r,g,b) -> fromIntegral $ 16*r+4*g+b) x]
+
+    imageData2 = B.concat $ (map mapLines2 img)
     mapLines2 x = B.concat [bytesToFollow, clear, B.pack $ map (\(r,g,b) -> fromIntegral $ 16*r) x]
 
-    imageEnd = B.concat [smallNumber 1, stop, "\NUL"]
     bytesToFollow = smallNumber $ w + 1
     clear = B.singleton 0x80
-    stop  = B.singleton 0x81
 
-
-gif w h imageData imageData2 = B.concat
+gif w h imageDatas = B.concat
   [ header
   , logicalScreenDescriptor
   , ct
   , applicationExtension
-  , frame
-  , frame2
+  , frames
+  , imageEnd
   , terminator
   ]
   where -- http://www.onicos.com/staff/iz/formats/gif.html
@@ -58,16 +54,17 @@ gif w h imageData imageData2 = B.concat
 
     applicationExtension = "!\255\vNETSCAPE2.0\ETX\SOH\NUL\NUL\NUL"
 
-    frame = B.concat [graphicControlExtension, imageDescriptor, image]
-    image = B.concat [lzwMinSize, imageData, "\NUL"]
-
-    frame2 = B.concat [graphicControlExtension, imageDescriptor, image2]
-    image2 = B.concat [lzwMinSize, imageData2, "\NUL"]
+    frames = B.concat $ map (\i -> B.concat [graphicControlExtension, imageDescriptor, i]) images
+    images = map (\i -> B.concat [lzwMinSize, i, "\NUL"]) imageDatas
 
     graphicControlExtension = B.concat ["!\249\EOT\b", delay, "\255", "\NUL"]
     delay = number 100
 
     lzwMinSize = B.singleton 0x07
+
+    imageEnd = B.concat [smallNumber 1, stop, "\NUL"]
+    stop  = B.singleton 0x81
+
     terminator  = ";"
 
 smallNumber x = B.singleton $ fromIntegral $ x `mod` 256
