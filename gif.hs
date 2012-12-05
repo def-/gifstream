@@ -21,7 +21,7 @@ toGif img = gif w h imageData
   where
     w = length $ head img
     h = length img
-    imageData = B.concat $ map mapLines img
+    imageData = B.concat $ (map mapLines img) ++ [imageEnd, stop]
     mapLines x = B.concat [bytesToFollow, clear, B.pack $ map (\(r,g,b) -> fromIntegral $ 16*r+4*g+b) x]
 
     imageEnd = B.concat [smallNumber 1, stop, "\NUL"]
@@ -45,7 +45,7 @@ gif w h imageData = B.concat
     width       = number w
     height      = number h
     gctInfo     = B.singleton 0xf6
-    bgColor     = "\NUL"
+    bgColor     = smallNumber 127
     aspectRatio = "\NUL"
 
     imageDescriptor = B.concat [",", yPos, xPos, width, height, localColor]
