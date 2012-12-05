@@ -33,7 +33,7 @@ loop state sock = do
   forkIO $ body conn
   loop state sock
 
-  where
+  where -- lower delay in GIF to force browser to actually show the gif we send
     body c = do
       i <- readIORef state
       sendAll c $ msg $ initialFrame (delay `div` 15000) i

@@ -7,7 +7,6 @@ module Gif (
   )
   where
 
-import Data.Char
 import qualified Data.ByteString as B
 
 initialFrame delay img = B.concat
