@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Main (
-  main,
+module Net (
+  server,
   )
   where
 
@@ -14,52 +14,42 @@ import Control.Concurrent
 
 import Data.IORef
 import System.IO
-import System.IO.Unsafe
 
 import Gif
 
-state = unsafePerformIO $ newIORef $ img
+port  = 5002
+delay = 100000 -- in µs
 
-delay = 10 -- in s/100
+server logic = withSocketsDo $ do
+  hSetBuffering stdin NoBuffering
+  sock <- listenOn $ PortNumber port
+  state <- newIORef []
+  forkIO $ loop state sock
+  logic state
 
-main = withSocketsDo $ do
-    hSetBuffering stdin NoBuffering
-    sock <- listenOn $ PortNumber 5002
-    forkIO $ loop sock
-    input
+loop state sock = do
+  (conn, _) <- accept sock
 
-input = do
-  c <- getChar
-  case c of
-    'a' -> writeIORef state img2
-    otherwise -> writeIORef state img
-  input
+  forkIO $ body conn
+  loop state sock
 
-loop sock = do
-   --content <- B.readFile "foo.gif"
-   (conn, _) <- accept sock
+  where
+    body c = do
+      i <- readIORef state
+      sendAll c $ msg $ initialFrame (delay `div` 15000) i
+      nextFrame c
 
-   let body c = do i <- readIORef state
-                   sendAll c $ msg $ initialFrame delay i
-                   go c
-                   sendAll c $ finalize
-                   sClose c
+    nextFrame c = do
+      threadDelay delay
+      i <- readIORef state
+      sendAll c $ frame (delay `div` 15000) i
+      nextFrame c
 
-       go c = do i <- readIORef state
-                 threadDelay $ delay * 15000
-                 sendAll c $ frame delay i
-                 go c
-
-   forkIO $ body conn
-   loop sock
-
---msg = "HTTP/1.0 200 OK\r\nContent-Length: 5\r\n\r\nPong!\r\n"
-
-msg content = B.intercalate "\r\n"
-  [ "HTTP/1.0 200 OK"
-  , "Server: gifstream/0.1"
-  , "Content-Type: image/gif"
-  , "Content-Transfer-Encoding: binary"
-  , ""
-  , content
-  ]
+    msg content = B.intercalate "\r\n"
+      [ "HTTP/1.0 200 OK"
+      , "Server: gifstream/0.1"
+      , "Content-Type: image/gif"
+      , "Content-Transfer-Encoding: binary"
+      , ""
+      , content
+      ]
