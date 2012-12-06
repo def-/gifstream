@@ -18,30 +18,29 @@ import System.IO
 import Gif
 
 port  = 5002
-delay = 100000 -- in µs
 
-server logic = withSocketsDo $ do
+server delay logic = withSocketsDo $ do
   hSetBuffering stdin NoBuffering
   sock <- listenOn $ PortNumber port
-  state <- newIORef []
-  forkIO $ loop state sock
-  logic state
+  imageRef <- newIORef []
+  forkIO $ loop delay imageRef sock
+  logic imageRef
 
-loop state sock = do
+loop delay imageRef sock = do
   (conn, _) <- accept sock
 
   forkIO $ body conn
-  loop state sock
+  loop delay imageRef sock
 
   where -- lower delay in GIF to force browser to actually show the gif we send
     body c = do
-      i <- readIORef state
+      i <- readIORef imageRef
       sendAll c $ msg $ initialFrame (delay `div` 15000) i
       nextFrame c
 
     nextFrame c = do
       threadDelay delay
-      i <- readIORef state
+      i <- readIORef imageRef
       sendAll c $ frame (delay `div` 15000) i
       nextFrame c
 
