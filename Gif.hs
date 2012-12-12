@@ -8,6 +8,7 @@ module Gif (
   where
 
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as C -- for OverloadedStrings
 
 initialFrame delay img = B.concat
   [ "GIF89a"
