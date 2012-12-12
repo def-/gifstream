@@ -17,12 +17,31 @@ delay = 100000 -- in µs
 
 width = 32
 height = 32
-zoom = 8
+zoom = 4
 
 data Action = L | R | U | D deriving Eq
 
-logic state = do
-  sendMSignal state $ scale zoom img -- write default image
+moveSnake xs@((x,y):_) food action = newHead : newTail
+  where newHead = case action of
+            L -> (x-1,y)
+            R -> (x+1,y)
+            U -> (x,y-1)
+            D -> (x,y+1)
+        newTail
+          | newHead == food = xs
+          | otherwise  = init xs
+
+moveFood (x:xs) food
+  | x == food = getRandomOutside (x:xs)
+  | otherwise = return food
+
+colorize snake food x
+  | x `elem` snake = (3,3,3)
+  | x == food      = (3,0,0)
+  | otherwise      = (0,0,0)
+
+logic imageSignal = do
+  sendMSignal imageSignal $ scale zoom img -- write default image
   oldActionRef <- newIORef R
   actionRef <- newIORef R
   snakeRef  <- newIORef [(15,15),(14,15)]
@@ -36,47 +55,38 @@ logic state = do
 
     action = do
       action <- readIORef actionRef
+      food   <- readIORef foodRef
+      snake  <- readIORef snakeRef
+
+      let newSnake = moveSnake snake food action
+
+      --checkGameOver newSnake
+
+      newFood <- moveFood snake food
+
       writeIORef oldActionRef action
-      modifyIORef snakeRef $ \xs@((x,y):_) -> (case action of
-          L -> (x-1,y)
-          R -> (x+1,y)
-          U -> (x,y-1)
-          D -> (x,y+1)
-        ):xs
+      writeIORef snakeRef newSnake
+      writeIORef foodRef newFood
 
-      food <- readIORef foodRef
-      (x@(xx,xy):xs) <- readIORef snakeRef
-      modifyIORef snakeRef $ \(x:xs) -> if x == food
-        then x : xs
-        else x : init xs
+      let image = map (\x -> map (colorize newSnake newFood) x) imgPoss
+          --image = splitEvery width $ map colorize [(x,y) | y <- [0..height-1], x <- [0..width-1]]
 
-      (fx,fy) <- getRandomOutside (x:xs)
-
-      if x `elem` xs || xx < 0 || xx >= width || xy < 0 || xy >= height then gameOver else return ()
-
-      if x == food
-      then writeIORef foodRef (fx,fy)
-      else return ()
-
-      snake <- readIORef snakeRef
-
-      let colorize x = if x `elem` snake then (3,3,3) else if x == food then (3,0,0) else (0,0,0)
-          image = splitEvery width $ map colorize [(x,y) | y <- [0..height-1], x <- [0..width-1]]
-
-      sendMSignal state $ scale zoom image
+      sendMSignal imageSignal $ scale zoom image
 
     input = do
       c <- getChar
       x <- readIORef oldActionRef
       writeIORef actionRef $
         let y = case c of
-                  'a' -> L
-                  'd' -> R
                   'w' -> U
+                  'a' -> L
                   's' -> D
+                  'd' -> R
                   otherwise -> x
         in if opposite x == y then x else y
       input
+
+    checkGameOver ((x,y):xs) = if (x,y) `elem` xs || x < 0 || x >= width || y < 0 || y >= height then gameOver else return ()
 
     gameOver = do
       writeIORef oldActionRef R
@@ -97,21 +107,20 @@ opposite D = U
 getRandomOutside xs = do
   fx <- randomRIO (0,width-1)
   fy <- randomRIO (0,height-1)
-  return $ getNextFitting (fx,fy)
 
-  where getNextFitting (fx,fy)
-          | (fx,fy) `elem` xs = if fx < width - 1 then getNextFitting (fx+1,fy)
-                                                  else getNextFitting (0, fy+1)
-          | otherwise         = (fx,fy)
+  if (fx,fy) `elem` xs
+  then getRandomOutside xs
+  else return (fx,fy)
 
 scale zoom img = concat $ map (replicate zoom) $ map (\x -> concat $ map (replicate zoom) x) img
 
-build g = g (:) []
+imgPoss = splitEvery width [(x,y) | y <- [0..height-1], x <- [0..width-1]]
 
 splitEvery :: Int -> [e] -> [[e]]
-splitEvery i ls = map (take i) (build (splitter ls)) where
-  splitter [] _ n = n
-  splitter l c n  = l `c` splitter (drop i l) c n
+splitEvery i ls
+  | length ys < i = [xs,ys]
+  | otherwise     = xs : splitEvery i ys
+  where (xs,ys) = splitAt i ls
 
 img :: [[(Int,Int,Int)]]
 img = replicate height $ replicate height (0,0,0)

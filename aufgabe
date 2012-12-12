@@ -6,6 +6,12 @@ Die Ausgabe des Spiels soll ein GIF-Stream sein. Ein Bild-Frame ist wie folgt de
 
 > data Image = [[(Int,Int,Int)]]
 
+Kompilieren mit:
+  ghc -threaded Snake.hs
+
+Ausführen:
+  ./Snake
+
 GIF-Stream anschauen:
   http://localhost:5002 im Browser öffnen
 
