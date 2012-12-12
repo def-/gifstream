@@ -1,7 +1,8 @@
-import Data.IORef
+import Control.Monad
 import Control.Concurrent
 import Control.Concurrent.MVar
 import System.Random
+import Data.IORef
 
 import MSignal
 import Net
@@ -38,40 +39,40 @@ moveFood (x:xs) food
 colorize snake food x
   | x `elem` snake = (3,3,3)
   | x == food      = (3,0,0)
-  | otherwise      = (0,0,0)
+  | otherwise      = (1,1,1)
 
 logic imageSignal = do
   sendMSignal imageSignal $ scale zoom img -- write default image
   oldActionRef <- newIORef R
   actionRef <- newIORef R
   snakeRef  <- newIORef [(15,15),(14,15)]
-  foodRef   <- newIORef (28,28)
+  food <- getRandomOutside [(15,15),(14,15)]
+  foodRef   <- newIORef food
 
   let
     loop = do
-      forkIO action
+      forkIO updateGame
       threadDelay delay
       loop
 
-    action = do
+    updateGame = do
       action <- readIORef actionRef
       food   <- readIORef foodRef
       snake  <- readIORef snakeRef
 
       let newSnake = moveSnake snake food action
 
-      --checkGameOver newSnake
-
       newFood <- moveFood snake food
+
+      let image = map (map (colorize newSnake newFood)) imgPoss
 
       writeIORef oldActionRef action
       writeIORef snakeRef newSnake
       writeIORef foodRef newFood
 
-      let image = map (\x -> map (colorize newSnake newFood) x) imgPoss
-          --image = splitEvery width $ map colorize [(x,y) | y <- [0..height-1], x <- [0..width-1]]
-
       sendMSignal imageSignal $ scale zoom image
+
+      checkGameOver newSnake
 
     input = do
       c <- getChar
@@ -86,17 +87,19 @@ logic imageSignal = do
         in if opposite x == y then x else y
       input
 
-    checkGameOver ((x,y):xs) = if (x,y) `elem` xs || x < 0 || x >= width || y < 0 || y >= height then gameOver else return ()
+    checkGameOver ((x,y):xs) = when
+      (  (x,y) `elem` xs
+      || x < 0 || x >= width
+      || y < 0 || y >= height) gameOver
 
     gameOver = do
       writeIORef oldActionRef R
       writeIORef actionRef R
       writeIORef snakeRef [(15,15),(14,15)]
-      writeIORef foodRef (28,28)
-      --threadDelay 2000000
-      --loop
+      food <- getRandomOutside [(15,15),(14,15)]
+      writeIORef foodRef food
 
-  forkIO $ input
+  forkIO input
   loop
 
 opposite L = R
@@ -112,14 +115,14 @@ getRandomOutside xs = do
   then getRandomOutside xs
   else return (fx,fy)
 
-scale zoom img = concat $ map (replicate zoom) $ map (\x -> concat $ map (replicate zoom) x) img
+scale zoom img = concatMap (replicate zoom) $ map (concatMap (replicate zoom)) img
 
 imgPoss = splitEvery width [(x,y) | y <- [0..height-1], x <- [0..width-1]]
 
 splitEvery :: Int -> [e] -> [[e]]
 splitEvery i ls
-  | length ys < i = [xs,ys]
-  | otherwise     = xs : splitEvery i ys
+  | length ys > i = xs : splitEvery i ys
+  | otherwise     = [xs,ys]
   where (xs,ys) = splitAt i ls
 
 img :: [[(Int,Int,Int)]]
