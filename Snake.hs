@@ -1,6 +1,6 @@
 import Data.IORef
 import Control.Concurrent
-import Control.Concurrent.MVar
+import System.Random
 
 import Net
 
@@ -11,28 +11,30 @@ main = server delay logic
 
 -- 30000 seems to be the lowest value that works in Firefox
 -- 30 ms => 33 fps
-delay = 300000 -- in µs
+delay = 100000 -- in µs
 
 width = 32
 height = 32
-zoom = 8
+zoom = 4
 
 data Action = L | R | U | D deriving Eq
 
 logic state = do
   writeIORef state $ scale zoom img -- write default image
+  oldActionRef <- newIORef R
   actionRef <- newIORef R
-  snakeRef  <- newIORef [(15,15),(16,15)]
+  snakeRef  <- newIORef [(15,15),(14,15)]
   foodRef   <- newIORef (28,28)
 
   let
     loop = do
-      forkIO $ action
+      action
       threadDelay $ delay
       loop
 
     action = do
       action <- readIORef actionRef
+      writeIORef oldActionRef action
       modifyIORef snakeRef $ \xs@((x,y):_) -> (case action of
           L -> (x-1,y)
           R -> (x+1,y)
@@ -41,9 +43,19 @@ logic state = do
         ):xs
 
       food <- readIORef foodRef
+      (x:xs) <- readIORef snakeRef
       modifyIORef snakeRef $ \(x:xs) -> if x == food
         then x : xs
         else x : init xs
+
+      fx <- randomRIO (0,width-1)
+      fy <- randomRIO (0,height-1)
+
+      if x `elem` xs then putStrLn "GAME OVER" else return ()
+
+      if x == food
+      then writeIORef foodRef (fx,fy)
+      else return ()
 
       snake <- readIORef snakeRef
 
@@ -53,13 +65,14 @@ logic state = do
 
     input = do
       c <- getChar
-      modifyIORef actionRef $ \x ->
+      x <- readIORef oldActionRef
+      writeIORef actionRef $
         let y = case c of
                   'a' -> L
                   'd' -> R
                   'w' -> U
                   's' -> D
-                  otherwise -> y
+                  otherwise -> x
         in if opposite x == y then x else y
       input
 

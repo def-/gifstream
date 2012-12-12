@@ -1,7 +1,6 @@
 import Data.IORef
 import System.Timeout
 import Control.Concurrent
-import Control.Concurrent.MVar
 
 import Net
 
@@ -15,15 +14,15 @@ main = server delay logic
 delay = 30000 -- in µs
 
 logic state = do
-  putMVar state img -- write default image
+  writeIORef state img -- write default image
   loop
 
   where
     loop = do
       c <- getChar
       case c of
-        'a' -> putMVar state img2
-        otherwise -> putMVar state img
+        'a' -> writeIORef state img2
+        otherwise -> writeIORef state img
       loop
 
 img :: [[(Int,Int,Int)]]
