@@ -2,6 +2,10 @@
 
 module Net (
   server,
+  RGB,
+  Frame,
+  FrameSignal,
+  Logic
   )
   where
 
@@ -17,30 +21,33 @@ import System.IO
 import MSignal
 import Gif
 
-port  = 5002
+type FrameSignal = MSignal Frame
+type Logic = FrameSignal -> IO ()
 
-server delay logic = withSocketsDo $ do
+server :: PortNumber -> Int -> Logic -> IO ()
+server port delay logic = withSocketsDo $ do
   hSetBuffering stdin NoBuffering
   sock <- listenOn $ PortNumber port
-  imageSignal <- newMSignal
-  forkIO $ loop delay imageSignal sock
-  logic imageSignal
+  frameSignal <- newMSignal
+  _ <- forkIO $ loop delay frameSignal sock
+  logic frameSignal
 
-loop delay imageSignal sock = do
+loop :: Int -> FrameSignal -> Socket -> IO ()
+loop delay frameSignal sock = do
   (conn, _) <- accept sock
 
-  forkIO $ body conn
-  loop delay imageSignal sock
+  _ <- forkIO $ body conn
+  loop delay frameSignal sock
 
   where -- lower delay in GIF to force browser to actually show the gif we send
     body c = do
-      i <- receiveMSignal imageSignal
-      sendAll c $ msg $ initialFrame (delay `div` 15000) i
+      f <- receiveMSignal frameSignal
+      sendAll c $ msg $ initialFrame (delay `div` 20000) f
       nextFrame c
 
     nextFrame c = do
-      i <- receiveMSignal imageSignal
-      sendAll c $ frame (delay `div` 15000) i
+      f <- receiveMSignal frameSignal
+      sendAll c $ frame (delay `div` 20000) f
       nextFrame c
 
     msg content = B.intercalate "\r\n"

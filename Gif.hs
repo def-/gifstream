@@ -3,13 +3,19 @@
 module Gif (
   initialFrame,
   frame,
-  finalize
+  finalize,
+  RGB,
+  Frame
   )
   where
 
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as C -- for OverloadedStrings
+import qualified Data.ByteString.Char8() -- for OverloadedStrings
 
+type RGB = (Int,Int,Int)
+type Frame = [[RGB]]
+
+initialFrame :: Int -> Frame -> B.ByteString
 initialFrame delay img = B.concat
   [ "GIF89a"
   , number w, number h, gctInfo, bgColor, aspect -- logical screen descriptor
@@ -28,6 +34,7 @@ initialFrame delay img = B.concat
     colors  = [0,64,128,255]
     dummyCT = B.concat $ replicate 64 $ B.pack [255,255,255]
 
+frame :: Int -> Frame -> B.ByteString
 frame delay img = B.concat
   [ "!\249\EOT\b", number delay, "\255", "\NUL"  -- graphic control extension
   , ",", yPos, xPos, number w, number h, localCT -- image descriptor
@@ -53,10 +60,14 @@ frame delay img = B.concat
             bytesToFollow = smallNumber $ length y + 1
             clear = B.singleton 0x80
 
+finalize :: B.ByteString
 finalize = B.concat [bytesToFollow, stop, "\NUL", ";"]
   where
     bytesToFollow = smallNumber 1
     stop = B.singleton 0x81
 
+smallNumber :: Int -> B.ByteString
 smallNumber x = B.singleton $ fromIntegral $ x `mod` 256
+
+number :: Int -> B.ByteString
 number x = B.pack $ map fromIntegral [x `mod` 256, x `div` 256]
