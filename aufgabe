@@ -6,9 +6,13 @@ Das dazu benötigte Rahmenwerk finden Sie auf Übungshomepage.
 
 Die Ausgabe des Spiels soll ein GIF-Stream sein.
 
-Ein einzelner Frame einer GIF ist wie folgt definiert:
+Es werden 64 Farben unterstützt, die als Int-Tupel von (0,0,0) bis (3,3,3) angesprochen werden.
 
-> type Image = [[(Int,Int,Int)]]
+> type RGB = (Int,Int,Int)
+
+Ein einzelner Frame einer GIF ist definiert als Liste von Zeilen, wobei jede Zeile eine Liste von RGB-Werten ist.
+
+> type Frame = [[RGB]]
 
 Kompilieren mit:
   ghc -threaded Snake.hs
