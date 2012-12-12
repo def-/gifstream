@@ -1,0 +1,13 @@
+== Spieleprogrammierung in Haskell mit Ausgabe als GIF ==
+
+In dieser Aufgabe sollt ihr Snake für Haskell programmieren.
+
+Die Ausgabe des Spiels soll ein GIF-Stream sein. Ein Bild-Frame ist wie folgt definiert:
+
+> data Image = [[(Int,Int,Int)]]
+
+GIF-Stream anschauen:
+  http://localhost:5002 im Browser öffnen
+
+Aufnehmen:
+  wget -O game.gif http://localhost:5002
