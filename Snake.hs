@@ -1,8 +1,9 @@
 import Data.IORef
 import Control.Concurrent
-import Control.Concurrent.Chan
+import Control.Concurrent.MVar
 import System.Random
 
+import MSignal
 import Net
 
 -- Stopping focus of the browser tab stops the animation and fucks everything
@@ -21,7 +22,7 @@ zoom = 8
 data Action = L | R | U | D deriving Eq
 
 logic state = do
-  writeChan state $ scale zoom img -- write default image
+  sendMSignal state $ scale zoom img -- write default image
   oldActionRef <- newIORef R
   actionRef <- newIORef R
   snakeRef  <- newIORef [(15,15),(14,15)]
@@ -62,7 +63,7 @@ logic state = do
       let colorize x = if x `elem` snake then (3,3,3) else if x == food then (3,0,0) else (0,0,0)
           image = splitEvery width $ map colorize [(x,y) | y <- [0..height-1], x <- [0..width-1]]
 
-      writeChan state $ scale zoom image
+      sendMSignal state $ scale zoom image
 
     input = do
       c <- getChar
