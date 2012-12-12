@@ -12,6 +12,7 @@ main = server delay logic
 -- 30000 seems to be the lowest value that works in Firefox
 -- 30 ms => 33 fps
 delay = 100000 -- in µs
+delay2 = 100000 -- in µs
 
 width = 32
 height = 32
@@ -28,8 +29,8 @@ logic state = do
 
   let
     loop = do
-      action
-      threadDelay $ delay
+      forkIO action
+      threadDelay $ delay2
       loop
 
     action = do
@@ -43,15 +44,14 @@ logic state = do
         ):xs
 
       food <- readIORef foodRef
-      (x:xs) <- readIORef snakeRef
+      (x@(xx,xy):xs) <- readIORef snakeRef
       modifyIORef snakeRef $ \(x:xs) -> if x == food
         then x : xs
         else x : init xs
 
-      fx <- randomRIO (0,width-1)
-      fy <- randomRIO (0,height-1)
+      (fx,fy) <- getRandomOutside (x:xs)
 
-      if x `elem` xs then putStrLn "GAME OVER" else return ()
+      if x `elem` xs || xx < 0 || xx >= width || xy < 0 || xy >= height then gameOver else return ()
 
       if x == food
       then writeIORef foodRef (fx,fy)
@@ -76,13 +76,27 @@ logic state = do
         in if opposite x == y then x else y
       input
 
+  getChar
   forkIO $ input
   loop
+
+gameOver = do
+  putStrLn "GAME OVER"
 
 opposite L = R
 opposite R = L
 opposite U = D
 opposite D = U
+
+getRandomOutside xs = do
+  fx <- randomRIO (0,width-1)
+  fy <- randomRIO (0,height-1)
+  return $ getNextFitting (fx,fy)
+
+  where getNextFitting (fx,fy)
+          | (fx,fy) `elem` xs = if fx < width - 1 then getNextFitting (fx+1,fy)
+                                                  else getNextFitting (0, fy+1)
+          | otherwise         = (fx,fy)
 
 scale zoom img = concat $ map (replicate zoom) $ map (\x -> concat $ map (replicate zoom) x) img
 
