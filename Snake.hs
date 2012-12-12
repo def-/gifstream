@@ -29,11 +29,6 @@ logic state = do
 
   let
     loop = do
-      forkIO action
-      threadDelay $ delay2
-      loop
-
-    action = do
       action <- readIORef actionRef
       writeIORef oldActionRef action
       modifyIORef snakeRef $ \xs@((x,y):_) -> (case action of
@@ -63,6 +58,9 @@ logic state = do
           image = splitEvery width $ map colorize [(x,y) | y <- [0..height-1], x <- [0..width-1]]
       writeIORef state $ scale zoom image
 
+      threadDelay $ delay2
+      loop
+
     input = do
       c <- getChar
       x <- readIORef oldActionRef
@@ -76,12 +74,17 @@ logic state = do
         in if opposite x == y then x else y
       input
 
+    gameOver = do
+      writeIORef oldActionRef R
+      writeIORef actionRef R
+      writeIORef snakeRef [(15,15),(14,15)]
+      writeIORef foodRef (28,28)
+      threadDelay 2000000
+      loop
+
   getChar
   forkIO $ input
   loop
-
-gameOver = do
-  putStrLn "GAME OVER"
 
 opposite L = R
 opposite R = L
