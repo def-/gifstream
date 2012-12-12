@@ -17,10 +17,10 @@ width = 32
 height = 32
 zoom = 8
 
-data Action = L | R | U | D
+data Action = L | R | U | D deriving Eq
 
 logic state = do
-  putMVar state $ scale zoom img -- write default image
+  writeIORef state $ scale zoom img -- write default image
   actionRef <- newIORef R
   snakeRef  <- newIORef [(15,15),(16,15)]
   foodRef   <- newIORef (28,28)
@@ -49,20 +49,27 @@ logic state = do
 
       let colorize x = if x `elem` snake then (3,3,3) else if x == food then (3,0,0) else (0,0,0)
           image = splitEvery width $ map colorize [(x,y) | y <- [0..height-1], x <- [0..width-1]]
-      putMVar state $ scale zoom image
+      writeIORef state $ scale zoom image
 
     input = do
       c <- getChar
-      case c of
-        'a' -> writeIORef actionRef L
-        'd' -> writeIORef actionRef R
-        'w' -> writeIORef actionRef U
-        's' -> writeIORef actionRef D
-        otherwise -> return ()
+      modifyIORef actionRef $ \x ->
+        let y = case c of
+                  'a' -> L
+                  'd' -> R
+                  'w' -> U
+                  's' -> D
+                  otherwise -> y
+        in if opposite x == y then x else y
       input
 
   forkIO $ input
   loop
+
+opposite L = R
+opposite R = L
+opposite U = D
+opposite D = U
 
 scale zoom img = concat $ map (replicate zoom) $ map (\x -> concat $ map (replicate zoom) x) img
 
