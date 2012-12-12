@@ -7,8 +7,6 @@ module Gif (
   )
   where
 
--- max image width is 85 pixels
-
 import qualified Data.ByteString as B
 
 initialFrame delay img = B.concat
@@ -42,14 +40,17 @@ frame delay img = B.concat
     localCT = "\NUL"
 
     lzwMinSize = B.singleton 0x07
-    imageData = B.concat $ map mapLines img
-    mapLines x = B.concat
-      [ bytesToFollow, clear
-      , B.pack $ map (\(r,g,b) -> fromIntegral $ 16*r+4*g+b) x
-      ]
+    imageData = B.concat $ map (B.concat . mapLine) img
 
-    bytesToFollow = smallNumber $ w + 1
-    clear = B.singleton 0x80
+    mapLine x
+      | null ys   = z
+      | otherwise = z ++ mapLine ys
+      where (y,ys) = splitAt 126 x
+            z = [ bytesToFollow, clear
+                , B.pack $ map (\(r,g,b) -> fromIntegral $ 16*r+4*g+b) y
+                ]
+            bytesToFollow = smallNumber $ length y + 1
+            clear = B.singleton 0x80
 
 finalize = B.concat [bytesToFollow, stop, "\NUL", ";"]
   where

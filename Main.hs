@@ -7,7 +7,9 @@ import Net
 
 main = server delay logic
 
-delay = 100000 -- in µs
+-- 30000 seems to be the lowest value that works in Firefox
+-- 30 ms => 33 fps
+delay = 30000 -- in µs
 
 logic state = do
   writeIORef state img -- write default image
@@ -22,7 +24,7 @@ logic state = do
       loop
 
 img :: [[(Int,Int,Int)]]
-img = replicate 64 [(r,g,b) | r <- [0..3], g <- [0..3], b <- [0..3]]
+img = replicate 128 [(r,g,b) | r <- [0..3], g <- [0..3], b <- [0..3] ++ [0..3]]
 
 img2 :: [[(Int,Int,Int)]]
-img2 = replicate 64 [(r,g,b) | r <- [0..3], g <- [0,0,0,0], b <- [0,0,0,0]]
+img2 = replicate 128 [(r,g,b) | r <- [3,2..0], g <- [3,2..0], b <- [0,0,0,0,0,0,0,0]]
