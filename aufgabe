@@ -4,7 +4,7 @@ In dieser Aufgabe implementieren Sie Snake in Haskell.
 
 Das dazu benötigte Rahmenwerk finden Sie auf Übungshomepage.
 
-Die Ausgabe des Spiels soll ein GIF-Stream sein.
+Die Ausgabe des Spiels soll ein GIF-Stream sein, den man sich im Browser anschauen kann um so das Spiel live mitzuverfolgen.
 
 Es werden 64 Farben unterstützt, die als Int-Tupel von (0,0,0) bis (3,3,3) angesprochen werden.
 
@@ -130,3 +130,5 @@ Zufallszahlen zwischen x und y (einschließlich) lassen sich mit
 > r <- randomRIO (x,y)
 
 generieren
+
+Kür) Schreiben Sie ein weiteres Spiel mit GIF-Stream-Ausgabe, zum Beispiel Pong oder Tetris.

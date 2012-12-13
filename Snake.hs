@@ -35,10 +35,10 @@ type Position = (Int,Int)
 moveSnake :: [Position] -> Position -> Action -> [Position]
 moveSnake xs@((x,y):_) food action = newHead : newTail
   where newHead = case action of
-            L -> (x-1,y)
-            R -> (x+1,y)
-            U -> (x,y-1)
-            D -> (x,y+1)
+          L -> (x-1,y)
+          R -> (x+1,y)
+          U -> (x,y-1)
+          D -> (x,y+1)
         newTail = if newHead == food then xs
                                      else init xs
 
@@ -55,11 +55,11 @@ colorize snake food x
 
 charToAction :: Char -> Action -> Action
 charToAction c x = case c of
-                     'w' -> U
-                     'a' -> L
-                     's' -> D
-                     'd' -> R
-                     _   -> x
+  'w' -> U
+  'a' -> L
+  's' -> D
+  'd' -> R
+  _   -> x
 
 validateAction :: Action -> Action -> Action
 validateAction oldAction action = if opposite action == oldAction then oldAction else action

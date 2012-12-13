@@ -1,28 +1,29 @@
-import Data.IORef
 import System.Timeout
 import Control.Concurrent
 
+import MSignal
 import Net
 
 -- Stopping focus of the browser tab stops the animation and fucks everything
 -- up. Reload the page to fix it.
 
-main = server delay logic
+main = server port delay logic
 
 -- 30000 seems to be the lowest value that works in Firefox
 -- 30 ms => 33 fps
 delay = 30000 -- in µs
+port = 5002
 
 logic state = do
-  writeIORef state img -- write default image
+  sendMSignal state img -- write default image
   loop
 
   where
     loop = do
       c <- getChar
       case c of
-        'a' -> writeIORef state img2
-        otherwise -> writeIORef state img
+        'a' -> sendMSignal state img2
+        otherwise -> sendMSignal state img
       loop
 
 img :: [[(Int,Int,Int)]]
