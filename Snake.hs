@@ -89,15 +89,16 @@ data State = State
 
 initialState :: IO State
 initialState = do
-    food <- getRandomOutside [(15,15),(14,15)]
-    return $ State R [(15,15),(14,15)] food
+    let startSnake = [(15,15),(14,15)]
+    food <- getRandomOutside startSnake
+    return $ State R startSnake food
 
 logic :: IO () -> IO Char -> FrameSignal -> IO ()
 logic wait getInput frameSignal = initialState >>= go
   where
     go (State {..}) = do
       input <- getInput
-      let action = validateAction oldAction (charToAction input oldAction)
+      let action = validateAction oldAction $ charToAction input oldAction
 
       let newSnake = moveSnake snake food action
 
@@ -110,16 +111,15 @@ logic wait getInput frameSignal = initialState >>= go
       wait
       if checkGameOver newSnake
       then do
-         initialState >>= go  
+         initialState >>= go
       else do
-         go (State action newSnake newFood) 
+         go (State action newSnake newFood)
 
 
 checkGameOver :: [Position] -> Bool
-checkGameOver ((x,y):xs) =
-      (  (x,y) `elem` xs
-      || x < 0 || x >= width
-      || y < 0 || y >= height)
+checkGameOver ((x,y):xs) = ((x,y) `elem` xs
+                          || x < 0 || x >= width
+                          || y < 0 || y >= height)
 
 opposite :: Action -> Action
 opposite L = R
@@ -129,8 +129,8 @@ opposite D = U
 
 getRandomOutside :: [Position] -> IO Position
 getRandomOutside xs = do
-  fx <- randomRIO (0,width-1)
-  fy <- randomRIO (0,height-1)
+  fx <- randomRIO (0, width  - 1)
+  fy <- randomRIO (0, height - 1)
 
   if (fx,fy) `elem` xs
   then getRandomOutside xs
