@@ -66,7 +66,7 @@ Desweiteren ist es möglich den GIF-Stream aufzunehmen um ihn später anzuschaue
   wget -O game.gif http://localhost:8000
 
 2) Input
-Schreiben Sie eine Funktion, die Benutzereingaben von der Kommandozeile entgegennimmt und daraufhin das Ausgabebild beeinflusst.
+Schreiben Sie eine Funktion, die Benutzereingaben von der Kommandozeile entgegennimmt und daraufhin das Ausgabebild beeinflusst. Es sollen vier Aktionen möglich sein, MoveU, MoveL, MoveD, MoveD, die durch die Tasten wasd ausgelöst werden.
 
 > getChar :: IO Char
 
@@ -93,3 +93,40 @@ Lässt sich der Wert MoveL in actionRef schreiben. Mit
 Wird eine Variable action angelegt, die den Wert aus actionRef enthält.
 
 Passen Sie abhängig von der gemachten Eingabe actionRef in input an und machen Sie das Verhalten von loop vom aktuellen Wert von actionRef abhängig.
+
+3) Zustand
+Verfahren Sie nun auf ähnliche Weise wie in der vorherigen Aufgabe und fügen Sie IORefs hinzu für die durch die Schlange belegten Felder und das Feld an dem sich das Futterstück befindet.
+
+> type Position = (Int,Int)
+> type Snake = [Position]
+> type Food = Position
+
+Lesen Sie die IORefs in Ihrer loop und schreiben Sie schließlich die neuen Werte zurück.
+
+4) Feldausgabe
+Erzeugen Sie aus dem Feld ein Bild und geben Sie dieses aus.
+
+Dazu benötigen Sie womöglich eine Liste von 
+
+> imgPoss :: [[Position]]
+
+5) Scaling
+Um ein spielbar großes Bild zu erhalten implementieren Sie eine scale-Funktion und verwenden Sie diese um jeden Pixel im Spielfeld auf eine beliebige Anzahl Pixel zu skalieren.
+
+> scale :: Int -> Frame -> Frame
+
+6) Verhalten Schlange
+Implementieren Sie nun die Zustandsveränderung der Schlange.
+
+> moveSnake :: Snake -> Food -> Action -> Snake
+
+7) Verhalten Futter
+Implementieren Sie nun die Zustandsveränderung des Futters.
+
+> moveFood :: Snake -> Food -> IO Food
+
+Zufallszahlen zwischen x und y (einschließlich) lassen sich mit
+
+> r <- randomRIO (x,y)
+
+generieren
