@@ -14,14 +14,82 @@ Ein einzelner Frame einer GIF ist definiert als Liste von Zeilen, wobei jede Zei
 
 > type Frame = [[RGB]]
 
-Kompilieren mit:
-  ghc -threaded Snake.hs
+Das Rahmenwerk stellt eine Funktion server zur Verfügung:
 
-Ausführen:
+> server :: PortNumber -> Int -> Logic -> IO ()
+
+Das Rahmenwerk lässt sich mit import GifStream importieren. Es lässt sich wie folgt verwenden:
+
+> main = server 8000 200000 logic
+
+Ziel dieser Aufgabe ist es die Spiellogik von Snake in der Funktion logic zu implementieren.
+
+> logic :: FrameSignal -> IO ()
+
+1) Bilder ausgeben
+
+Um mit dem Rahmenwerk vertraut zu werden sollen in dieser Teilaufgabe abwechselnd zwei Bilder als Frames ausgegeben werden. Generieren Sie die Bilder img und img2, so dass img nur aus schwarzen Pixeln ( (0,0,0) ), img2 nur aus weißen Pixeln ( (3,3,3) ) besteht. Die Höhe und Breite der Bilder soll jeweils 32 Pixel betragen. Für Höhe und Breite von 2 Pixeln sähe die Lösung wie folgt aus:
+
+> img :: Frame
+> img = [[(0,0,0),(0,0,0)],[(0,0,0),(0,0,0)]]
+> img2 :: Frame
+> img2 = [[(3,3,3),(3,3,3)],[(3,3,3),(3,3,3)]]
+
+Um die Bilder auszugeben erhalten sie in Ihrer logic-Funktion ein FrameSignal, an das Sie mit sendMSignal ein neues Bild senden können.
+
+> sendMSignal :: FrameSignal -> Frame -> IO ()
+
+Um ein Verzögerung zwischen den gesendeten Bildern zu bewirken lässt sich mit threadDelay x ein Warten für x Mikrosekunden auslösen. Importieren Sie hierzu Control.Concurrent
+
+> threadDelay :: Int -> IO ()
+
+Bei IO-intensivem Code, wie er an dieser Stelle vorliegt, bietet es sich an, mit Hilfe der do-Notation Funktionen in imperativem Stil zu schreiben. Um ein einzelnes Bild wiederholt auszugeben könnte man schreiben:
+
+> logic frameSignal = do
+>   let
+>     loop = do
+>       sendMSignal frameSignal img
+>       threadDelay delay
+>       loop
+>   loop
+
+Kompilieren Sie Ihren Code und führen Sie ihn aus:
+  ghc -O3 -threaded Snake.hs
   ./Snake
 
-GIF-Stream anschauen:
-  http://localhost:5002 im Browser öffnen
+Nun können Sie in Ihrem Browser den erzeugten GIF-Stream unter folgender Adresse anschauen:
+  http://localhost:8000
 
-Aufnehmen:
-  wget -O game.gif http://localhost:5002
+Anderen Teilnehmern Ihres Netzwerks ist es ebenfalls möglich Ihren GIF-Stream zu betrachten, indem Sie statt localhost Ihre IP-Adresse eintragen.
+
+Desweiteren ist es möglich den GIF-Stream aufzunehmen um ihn später anzuschauen:
+  wget -O game.gif http://localhost:8000
+
+2) Input
+Schreiben Sie eine Funktion, die Benutzereingaben von der Kommandozeile entgegennimmt und daraufhin das Ausgabebild beeinflusst.
+
+> getChar :: IO Char
+
+In do-Notation lässt sich durch c <- getChar ein Zeichen in die Variable c lesen.
+
+Im Modul Control.Concurrent ist die Funktion forkIO definiert, mit der sich ein neuer Thread starten lässt.
+
+> forkIO :: IO () -> IO ThreadNumber
+
+Rufen Sie forkIO input vor loop auf um einen Eingabethread im Hintergrund laufen zu haben.
+
+Importieren Sie Data.IORef um eine Informationsübertragung zwischen den zwei laufenden Threads zu implementieren. Mit
+
+> actionRef <- newIORef MoveR
+
+erzeugt man einen Informationskanal namens actionRef, der mit dem Wert MoveR initialisert ist. Mit
+
+> writeIORef actionRef MoveL
+
+Lässt sich der Wert MoveL in actionRef schreiben. Mit
+
+> action <- readIORef actionRef
+
+Wird eine Variable action angelegt, die den Wert aus actionRef enthält.
+
+Passen Sie abhängig von der gemachten Eingabe actionRef in input an und machen Sie das Verhalten von loop vom aktuellen Wert von actionRef abhängig.

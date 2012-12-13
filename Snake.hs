@@ -138,4 +138,4 @@ splitEvery i ls
   where (xs,ys) = splitAt i ls
 
 img :: Frame
-img = replicate height $ replicate height (0,0,0)
+img = replicate height $ replicate width (0,0,0)
