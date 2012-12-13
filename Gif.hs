@@ -9,14 +9,6 @@ module Gif (
   )
   where
 
-import Data.List
-import Data.Char
-import Data.Maybe
-import Control.Monad
-import Control.Arrow
-
-import LZW
-
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8() -- for OverloadedStrings
 
@@ -56,16 +48,16 @@ frame delay img = B.concat
     localCT = "\NUL"
 
     lzwMinSize = B.singleton 0x07
-    imageData = B.concat $ mapLine $ B.unpack $ lzwEncode 7 $ map (\(r,g,b) -> 16*r+4*g+b) $ concat img
+    imageData = B.concat $ map (B.concat . mapLine) img
 
     mapLine x
       | null ys   = z
       | otherwise = z ++ mapLine ys
       where (y,ys) = splitAt 126 x
-            z = [ bytesToFollow
-                , B.pack $ map fromIntegral y
+            z = [ bytesToFollow, clear
+                , B.pack $ map (\(r,g,b) -> fromIntegral $ 16*r+4*g+b) y
                 ]
-            bytesToFollow = smallNumber $ length y
+            bytesToFollow = smallNumber $ length y + 1
             clear = B.singleton 0x80
 
 finalize :: B.ByteString
@@ -79,18 +71,3 @@ smallNumber x = B.singleton $ fromIntegral $ x `mod` 256
 
 number :: Int -> B.ByteString
 number x = B.pack $ map fromIntegral [x `mod` 256, x `div` 256]
-
-take2 = filter((==2).length). map (take 2). tails
-
-doLZW _ [] = []
-doLZW as (x:xs) =  lzw (map return as) [x] xs
-   where lzw a w [] = [fromJust $ elemIndex w a]
-         lzw a w (x:xs)  | w' `elem` a = lzw a w' xs
-                         | otherwise   = fromJust (elemIndex w a) : lzw (a++[w']) [x] xs
-              where w' = w++[x]
-
-encode_LZW alphabet = work (map (:[]) alphabet) where
-  chunk pred lst = last . takeWhile (pred . fst) . tail $ zip (inits lst) (tails lst)
-  work table []  = []
-  work table lst = fromJust (elemIndex tok table) : work (table ++ [tok ++ [head rst]]) rst
-    where (tok, rst) = chunk (`elem` table) lst
