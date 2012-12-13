@@ -1,7 +1,10 @@
+{-# LANGUAGE RecordWildCards #-}
+
 import Control.Monad
 import Control.Concurrent
 import System.Random
 import Data.IORef
+import Control.Concurrent.MVar
 
 import MSignal
 import Net
@@ -16,7 +19,10 @@ delay = 100000 -- in µs
 port = 5002
 
 main :: IO ()
-main = server port delay logic
+main = do
+    wait <- getMetronome
+    getAction <- inputGetter
+    server port delay (logic wait getAction)
 
 width = 32
 height = 32
@@ -33,9 +39,8 @@ moveSnake xs@((x,y):_) food action = newHead : newTail
             R -> (x+1,y)
             U -> (x,y-1)
             D -> (x,y+1)
-        newTail
-          | newHead == food = xs
-          | otherwise  = init xs
+        newTail = if newHead == food then xs
+                                     else init xs
 
 moveFood :: [Position] -> Position -> IO Position
 moveFood (x:xs) food
@@ -48,33 +53,51 @@ colorize snake food x
   | x == food      = (3,0,0)
   | otherwise      = (1,1,1)
 
-updateAction :: Char -> Action -> Action
-updateAction c x = if opposite x == y then x else y
-  where y = case c of
-             'w' -> U
-             'a' -> L
-             's' -> D
-             'd' -> R
-             _   -> x
+charToAction :: Char -> Action -> Action
+charToAction c x = case c of
+                     'w' -> U
+                     'a' -> L
+                     's' -> D
+                     'd' -> R
+                     _   -> x
 
-logic :: FrameSignal -> IO ()
-logic frameSignal = do
-  sendMSignal frameSignal $ scale zoom img -- write default image
-  oldActionRef <- newIORef R
-  actionRef <- newIORef R
-  snakeRef  <- newIORef [(15,15),(14,15)]
-  foodRef <- getRandomOutside [(15,15),(14,15)] >>= newIORef
+validateAction :: Action -> Action -> Action
+validateAction oldAction action = if opposite action == oldAction then oldAction else action
 
-  let
-    loop = do
-      _ <- forkIO updateGame
-      threadDelay delay
-      loop
+getMetronome :: IO (IO ())
+getMetronome = do
+    var <- newMVar ()
+    forkIO $ forever $ do
+        threadDelay delay
+        putMVar var ()
+    return $ takeMVar var
 
-    updateGame = do
-      action <- readIORef actionRef
-      food   <- readIORef foodRef
-      snake  <- readIORef snakeRef
+inputGetter :: IO (IO Char)
+inputGetter = do
+    inputRef <- newIORef 'd'
+    forkIO $ forever $ do
+        c <- getChar
+        writeIORef inputRef c
+    return $ readIORef inputRef
+
+
+data State = State
+    { oldAction :: Action
+    , snake :: [Position]
+    , food :: Position
+    }
+
+initialState :: IO State
+initialState = do
+    food <- getRandomOutside [(15,15),(14,15)]
+    return $ State R [(15,15),(14,15)] food
+
+logic :: IO () -> IO Char -> FrameSignal -> IO ()
+logic wait getInput frameSignal = initialState >>= go
+  where
+    go (State {..}) = do
+      input <- getInput
+      let action = validateAction oldAction (charToAction input oldAction)
 
       let newSnake = moveSnake snake food action
 
@@ -82,33 +105,21 @@ logic frameSignal = do
 
       let frame = map (map (colorize newSnake newFood)) imgPoss
 
-      writeIORef oldActionRef action
-      writeIORef snakeRef newSnake
-      writeIORef foodRef newFood
-
       sendMSignal frameSignal $ scale zoom frame
 
-      checkGameOver newSnake
+      wait
+      if checkGameOver newSnake
+      then do
+         initialState >>= go  
+      else do
+         go (State action newSnake newFood) 
 
-    input = do
-      c <- getChar
-      modifyIORef actionRef $ updateAction c
-      input
 
-    checkGameOver ((x,y):xs) = when
+checkGameOver :: [Position] -> Bool
+checkGameOver ((x,y):xs) =
       (  (x,y) `elem` xs
       || x < 0 || x >= width
-      || y < 0 || y >= height) gameOver
-
-    gameOver = do
-      writeIORef oldActionRef R
-      writeIORef actionRef R
-      writeIORef snakeRef [(15,15),(14,15)]
-      food <- getRandomOutside [(15,15),(14,15)]
-      writeIORef foodRef food
-
-  _ <- forkIO input
-  loop
+      || y < 0 || y >= height)
 
 opposite :: Action -> Action
 opposite L = R

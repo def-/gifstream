@@ -28,6 +28,7 @@ server :: PortNumber -> Int -> Logic -> IO ()
 server port delay logic = withSocketsDo $ do
   hSetBuffering stdin NoBuffering
   sock <- listenOn $ PortNumber port
+  putStrLn $ "Guckst du hier: http://localhost:" ++ show port ++ "/"
   frameSignal <- newMSignal
   _ <- forkIO $ loop delay frameSignal sock
   logic frameSignal
