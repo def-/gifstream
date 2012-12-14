@@ -31,9 +31,11 @@ Ziel dieser Aufgabe ist es die Spiellogik von Snake in der Funktion logic zu imp
 Um mit dem Rahmenwerk vertraut zu werden sollen in dieser Teilaufgabe abwechselnd zwei Bilder als Frames ausgegeben werden. Generieren Sie die Bilder img und img2, so dass img nur aus schwarzen Pixeln ( (0,0,0) ), img2 nur aus weißen Pixeln ( (3,3,3) ) besteht. Die Höhe und Breite der Bilder soll jeweils 32 Pixel betragen. Für Höhe und Breite von 2 Pixeln sähe die Lösung wie folgt aus:
 
 > img :: Frame
-> img = [[(0,0,0),(0,0,0)],[(0,0,0),(0,0,0)]]
+> img = [[(0,0,0),(0,0,0)]
+>       ,[(0,0,0),(0,0,0)]]
 > img2 :: Frame
-> img2 = [[(3,3,3),(3,3,3)],[(3,3,3),(3,3,3)]]
+> img2 = [[(3,3,3),(3,3,3)]
+>        ,[(3,3,3),(3,3,3)]]
 
 Um die Bilder auszugeben erhalten sie in Ihrer logic-Funktion ein FrameSignal, an das Sie mit sendMSignal ein neues Bild senden können.
 

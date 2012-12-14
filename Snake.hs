@@ -102,9 +102,9 @@ logic wait getInput frameSignal = initialState >>= go
 
       let newSnake = moveSnake snake food action
 
-      newFood <- moveFood snake food
+      newFood <- moveFood newSnake food
 
-      let frame = map (map (colorize newSnake newFood)) imgPoss
+      let frame = map (map (colorize newSnake newFood)) imgPositions
 
       sendMSignal frameSignal $ scale zoom frame
 
@@ -139,8 +139,8 @@ getRandomOutside xs = do
 scale :: Int -> Frame -> Frame
 scale z frame = concatMap (replicate z) $ map (concatMap (replicate z)) frame
 
-imgPoss :: [[Position]]
-imgPoss = splitEvery width [(x,y) | y <- [0..height-1], x <- [0..width-1]]
+imgPositions :: [[Position]]
+imgPositions = splitEvery width [(x,y) | y <- [0..height-1], x <- [0..width-1]]
 
 splitEvery :: Int -> [e] -> [[e]]
 splitEvery i ls
