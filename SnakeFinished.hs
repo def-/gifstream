@@ -44,10 +44,8 @@ logic wait getInput sendFrame = initialState >>= go
 
       wait
       if checkGameOver newSnake -- Aufgabe 4
-      then do
-         initialState >>= go
-      else do
-         go (State action newSnake newFood)
+      then initialState >>= go
+      else go (State action newSnake newFood)
 
 initialState :: IO State
 initialState = do
@@ -123,6 +121,6 @@ getRandomOutside xs = do
 -- Aufgabe 4
 
 checkGameOver :: [Position] -> Bool
-checkGameOver ((x,y):xs) = ((x,y) `elem` xs
-                          || x < 0 || x >= width
-                          || y < 0 || y >= height)
+checkGameOver ((x,y):xs) = (x,y) `elem` xs
+                        || x < 0 || x >= width
+                        || y < 0 || y >= height
