@@ -11,11 +11,11 @@
 
 \begin{document}
 
-\section{Haskell: Spieleprogrammierung mit GIF-Stream}
+\section{Haskell: Spieleprogrammierung mit GIF-Streams}
 
 Snake ist ein Computerspiel, bei dem man eine Schlange duch ein Spielfeld steuert.
 Futter zu essen verlängert die Schlange.
-Prallt die Schlange an eine Wand oder sich selbst, so endet das Spiel.
+Kollidiert die Schlange mit einer Wand oder sich selbst, so endet das Spiel.
 
 \begin{center}
 \includegraphics{snake}
@@ -24,7 +24,7 @@ Prallt die Schlange an eine Wand oder sich selbst, so endet das Spiel.
 In dieser Aufgabe implementieren Sie Snake in Haskell.
 Das dazu benötigte Rahmenwerk finden Sie auf der Übungshomepage.
 
-Die Ausgabe des Spiels soll ein GIF-Stream sein, den man im Browser anschauen kann, um so das Spiel live mitzuverfolgen.
+Die Ausgabe des Spiels erfolgt über einen GIF-Stream, den man im Browser anschauen kann, um so das Spiel live mitzuverfolgen.
 Es werden 64 Farben unterstützt, die als Int-Tupel von (0,0,0) bis (3,3,3) angesprochen werden.
 
 \begin{lstlisting}

@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- | Generate dynamic GIF streams and provide them on an HTTP server.
 module GifStream (
   -- Functions
   server,
