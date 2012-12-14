@@ -20,7 +20,6 @@ import Network.Socket.ByteString (sendAll)
 
 import Control.Monad
 import Control.Concurrent
-import Control.Concurrent.MVar
 
 import Data.IORef
 
@@ -46,7 +45,7 @@ server port delay logic = withSocketsDo $ do
   getAction <- inputGetter
   frameSignal <- newMSignal
 
-  _ <- forkIO $ loop delay frameSignal sock
+  forkIO $ loop delay frameSignal sock
 
   logic wait getAction $ sendMSignal frameSignal
 
@@ -55,7 +54,7 @@ loop :: Int -> FrameSignal -> Socket -> IO ()
 loop delay frameSignal sock = do
   (conn, _) <- accept sock
 
-  _ <- forkIO $ body conn
+  forkIO $ body conn
   loop delay frameSignal sock
 
   where -- lower delay in GIF to force browser to actually show the gif we send
