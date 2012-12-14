@@ -11,7 +11,7 @@
 
 \begin{document}
 
-\section{Spieleprogrammierung mit GIF-Streams}
+\section{Haskell: Spieleprogrammierung mit GIF-Stream}
 
 Snake ist ein Computerspiel, bei dem man eine Schlange duch ein Spielfeld steuert.
 Futter zu essen verlängert die Schlange.
@@ -57,8 +57,8 @@ $ ./Snake
 Listening on http://127.0.0.1:5002/
 \end{lstlisting}
 
-Öffnen Sie die angegebene Adresse in Ihrem Browser.
-Durch drücken der Tasten WASD im Terminal lässt sich die Ausgabe im Browser beeinflussen.
+Öffnen Sie die angegebene Adresse in einem Browser.
+Durch Drücken der Tasten WASD im Terminal lässt sich die Ausgabe im Browser beeinflussen.
 
 Anderen Teilnehmern Ihres Netzwerks ist es ebenfalls möglich den GIF-Stream zu betrachten, indem Sie statt \texttt{127.0.0.1} Ihre Netzwerk-IP-Adresse eintragen.
 
@@ -82,15 +82,15 @@ logic wait getInput frameSignal = initialState >>= go
       let newFood = food
 
       let frame = case action of
-            MoveUp    -> replicate height $ replicate width (3,0,0)
-            MoveDown  -> replicate height $ replicate width (0,3,0)
-            MoveLeft  -> replicate height $ replicate width (0,0,3)
-            MoveRight -> replicate height $ replicate width (3,3,3)
+            MoveUp    -> replicate height (replicate width (3,0,0))
+            MoveDown  -> replicate height (replicate width (0,3,0))
+            MoveLeft  -> replicate height (replicate width (0,0,3))
+            MoveRight -> replicate height (replicate width (3,3,3))
 
-      sendMSignal frameSignal $ scale zoom frame
+      sendMSignal frameSignal (scale zoom frame)
 
       wait
-      go $ State action newSnake newFood
+      go (State action newSnake newFood)
 \end{lstlisting}
 
 Die Funktion \texttt{logic} erzeugt einen initialen Zustand für das Snake-Spiel und übergibt diesen an die \texttt{go}-Funktion.
@@ -99,7 +99,7 @@ Anschließend wird ein neuer Spielzustand generiert.
 Der anzuzeigende Frame wird dabei abhängig von der gedrückten Taste gewählt.
 Schließlich wird mit \texttt{sendMSignal} ein neuer Frame an alle verbundenen Clients geschickt.
 Dabei wird jeder Frame durch \texttt{scale} vergrößert.
-Der Aufruf von \texttt{wait} bewirkt ein Warten für die vereinbarte Zeit \texttt{delay}, die standardmäßig auf $200 ms$ gesetzt ist.
+Der Aufruf von \texttt{wait} bewirkt ein Warten für die vereinbarte Zeit \texttt{delay}, die standardmäßig auf $100 ms$ gesetzt ist.
 Am Ende der Funktion ruft diese sich selbst endrekursiv mit dem neu generierten Zustand auf.
 
 Ziel dieser Aufgabe ist es die Spiellogik in der Funktion \texttt{logic} schrittweise zu erweitern, so dass man am Ende Snake spielen kann.
@@ -142,7 +142,7 @@ Die neue Schlange erhält abhängig von der übergebenen Aktion einen neuen Kopf
 Beim Schwanz wird das letzte Element abgeschnitten, außer wenn die Schlange gerade auf Futter gestoßen ist.
 
 Es muss sichergestellt werden, dass die vom Benutzer gewählte Aktion überhaupt möglich ist.
-Schreiben Sie dazu eine Funktion \texttt{validateAction}, so dass sie in der Spiellogik \texttt{let action = validateAction oldAction \$ charToAction input oldAction} schreiben können.
+Schreiben Sie dazu eine Funktion \texttt{validateAction}, so dass sie in der Spiellogik \texttt{let action = validateAction oldAction (charToAction input oldAction)} schreiben können.
 Dazu soll \texttt{validateAction} nur dann eine neue Aktion zurückgeben, wenn diese möglich ist.
 Ansonsten soll die alte Aktion zurückgegeben werden.
 
@@ -171,5 +171,5 @@ checkGameOver :: [Position] -> Bool
 \end{lstlisting}
 
 \subsection{Kür}
-Schreiben Sie ein weiteres Spiel mit GIF-Stream-Ausgabe, zum Beispiel Pong, Tetris oder Conway's Game of Life.
+Programmieren Sie ein weiteres Spiel mit GIF-Stream-Ausgabe, zum Beispiel Pong, Tetris oder Conway's Game of Life.
 \end{document}

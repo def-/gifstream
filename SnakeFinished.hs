@@ -25,14 +25,14 @@ zoom = 4
 main :: IO ()
 main = server port delay logic
 
-logic :: IO () -> IO Char -> FrameSignal -> IO ()
-logic wait getInput frameSignal = initialState >>= go
+logic :: IO () -> IO Char -> (Frame -> IO ()) -> IO ()
+logic wait getInput sendFrame = initialState >>= go
   where
     go (State oldAction snake food) = do
       input <- getInput
 
       -- Generate new State
-      let action = validateAction oldAction $ charToAction input oldAction -- Aufgabe 2
+      let action = validateAction oldAction (charToAction input oldAction) -- Aufgabe 2
 
       let newSnake = moveSnake snake food action -- Aufgabe 2
 
@@ -40,7 +40,7 @@ logic wait getInput frameSignal = initialState >>= go
 
       let frame = map (map (colorize newSnake newFood)) imgPositions -- Aufgabe 1
 
-      sendMSignal frameSignal $ scale zoom frame
+      sendFrame (scale zoom frame)
 
       wait
       if checkGameOver newSnake -- Aufgabe 4
@@ -53,7 +53,7 @@ initialState :: IO State
 initialState = do
   let startSnake = [(15,15),(14,15)]
   let food = (28,28)
-  return $ State MoveRight startSnake food
+  return (State MoveRight startSnake food)
 
 charToAction :: Char -> Action -> Action
 charToAction c oldAction = case c of
@@ -64,7 +64,7 @@ charToAction c oldAction = case c of
   _   -> oldAction
 
 scale :: Int -> Frame -> Frame
-scale z frame = concatMap (replicate z) $ map (concatMap (replicate z)) frame
+scale z frame = concatMap (replicate z) (map (concatMap (replicate z)) frame)
 
 -- Aufgabe 1
 

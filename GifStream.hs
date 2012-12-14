@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module GifStream (
+  -- Functions
   server,
-  sendMSignal,
+  -- Types
   RGB,
   Frame,
   FrameSignal,
@@ -28,7 +29,7 @@ import qualified Data.ByteString.Char8() -- for OverloadedStrings
 type RGB = (Int,Int,Int) -- ^ Values in [0..3]
 type Frame = [[RGB]]
 type FrameSignal = MSignal Frame
-type Logic = IO () -> IO Char -> FrameSignal -> IO ()
+type Logic = IO () -> IO Char -> (Frame -> IO ()) -> IO ()
 
 -- | Run an HTTP server that delivers a continuing stream of a GIF to every
 --   incoming connections. A logic function is called to generate the GIF
@@ -46,7 +47,7 @@ server port delay logic = withSocketsDo $ do
 
   _ <- forkIO $ loop delay frameSignal sock
 
-  logic wait getAction frameSignal
+  logic wait getAction $ sendMSignal frameSignal
 
 -- | Wait for incoming connections and start delivering a GIF to them
 loop :: Int -> FrameSignal -> Socket -> IO ()
