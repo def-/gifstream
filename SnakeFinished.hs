@@ -31,14 +31,14 @@ logic wait getInput sendFrame = initialState >>= go
     go (State oldAction snake food) = do
       input <- getInput
 
-      -- Generate new State
+      -- Generate new state
       let action = validateAction oldAction (charToAction input oldAction) -- Aufgabe 2
 
       let newSnake = moveSnake snake food action -- Aufgabe 2
 
       newFood <- moveFood newSnake food -- Aufgabe 3
 
-      let frame = map (map (colorize newSnake newFood)) imgPositions -- Aufgabe 1
+      let frame = map (map (colorize newSnake newFood)) fieldPositions -- Aufgabe 1
 
       sendFrame (scale zoom frame)
 
@@ -68,8 +68,8 @@ scale z frame = concatMap (replicate z) (map (concatMap (replicate z)) frame)
 
 -- Aufgabe 1
 
-imgPositions :: [[Position]]
-imgPositions = splitEvery width [(x,y) | y <- [0..height-1], x <- [0..width-1]]
+fieldPositions :: [[Position]]
+fieldPositions = splitEvery width [(x,y) | y <- [0..height-1], x <- [0..width-1]]
 
 splitEvery :: Int -> [e] -> [[e]]
 splitEvery i ls

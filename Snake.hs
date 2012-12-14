@@ -30,7 +30,7 @@ logic wait getInput sendFrame = initialState >>= go
     go (State oldAction snake food) = do
       input <- getInput
 
-      -- Generate new State
+      -- Generate new state
       let action = charToAction input oldAction
       let newSnake = snake
       let newFood = food
