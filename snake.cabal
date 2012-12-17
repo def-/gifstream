@@ -11,7 +11,7 @@ Executable snake
   Main-is: SnakeFinished.hs
   Other-modules: GifStream
 
-  -- All in Haskell Platform?
+  -- All in Haskell Platform
   Build-Depends: base, bytestring, network, random
 
   Extensions: DoAndIfThenElse
