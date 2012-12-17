@@ -1,0 +1,17 @@
+Name: snake
+Version: 0.1
+Copyright: BSD3
+License: BSD3
+License-File: LICENSE
+Build-Type: Simple
+Cabal-Version: >= 1.2
+Maintainer: Dennis Felsing <dennis@felsin9.de>
+
+Executable snake
+  Main-is: SnakeFinished.hs
+  Other-modules: GifStream
+
+  -- All in Haskell Platform?
+  Build-Depends: base, bytestring, network, random
+
+  Extensions: DoAndIfThenElse
