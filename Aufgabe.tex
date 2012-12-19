@@ -170,7 +170,7 @@ Importieren Sie dazu \texttt{System.Random}.
 
 \subsection{Spielende}
 Passen Sie das Ende von \texttt{logic} so an, dass mit \texttt{checkGameOver newSnake} die Gültigkeit des neuen Zustands überprüft wird.
-Bei einem ungültigen Zustand soll das Spiel durch Aufruf von \texttt{initialState >>= go} neugestartet werden.
+Bei einem ungültigen Zustand soll das Spiel durch Aufruf von \texttt{initialState >{}>= go} neugestartet werden.
 
 \begin{lstlisting}
 checkGameOver :: [Position] -> Bool
