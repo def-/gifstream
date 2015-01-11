@@ -3,7 +3,7 @@ Make interactive games in Haskell using GIF streams that can be shown in the web
 
 An example of snake is included. Compile and run:
 
-    $ ghc -O3 -threaded Snake.Finished.hs
+    $ ghc -O3 -threaded SnakeFinished.hs
     $ ./SnakeFinished
     Listening on http://127.0.0.1:5002/
   

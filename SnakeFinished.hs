@@ -1,17 +1,29 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 import System.Random
 import GifStream
 
+import Control.Lens
+import Control.Monad.Trans.Class
+import Control.Monad.Trans.State
+
 -- Stopping focus of the browser tab stops the animation. Reload the page to fix it.
 
-type Position = (Int,Int)
+data Position = Position
+    { _x :: Int
+    , _y :: Int
+    }
 
-data Action = MoveLeft | MoveRight | MoveUp | MoveDown deriving Eq
+data Move = MoveLeft | MoveRight | MoveUp | MoveDown deriving Eq
 
 data State = State
-    { oldAction :: Action
-    , snake :: [Position]
-    , food :: Position
+    { _oldMove :: Move
+    , _snake :: [Position]
+    , _food :: Position
     }
+
+makeLenses ''Position
+makeLenses ''State
 
 -- 30000 seems to be the lowest value that works in Firefox
 -- 30 ms => 33 fps
@@ -20,32 +32,32 @@ port = 5002
 
 width = 32
 height = 32
-zoom = 4
+zoomScale = 4
 
 main :: IO ()
 main = server port delay logic
 
-logic :: IO () -> IO Char -> (Frame -> IO ()) -> IO ()
-logic wait getInput sendFrame = initialState >>= go
+--logic :: IO () -> IO Char -> (Frame -> IO ()) -> IO ()
+logic wait getInput sendFrame = evalStateT game initialState
   where
-    go (State oldAction snake food) = do
-      input <- getInput
+    game = do
+      input <- lift $ getInput
 
       -- Generate new state
-      let action = validateAction oldAction (charToAction input oldAction) -- Aufgabe 2
+      let move = validateMove oldMove (charToMove input oldMove) -- Aufgabe 2
 
-      let newSnake = moveSnake snake food action -- Aufgabe 2
+      let newSnake = moveSnake snake food move -- Aufgabe 2
 
       newFood <- moveFood newSnake food -- Aufgabe 3
 
       let frame = map (map (colorize newSnake newFood)) fieldPositions -- Aufgabe 1
 
-      sendFrame (scale zoom frame)
+      sendFrame (scale zoomScale frame)
 
       wait
       if checkGameOver newSnake -- Aufgabe 4
       then initialState >>= go
-      else go (State action newSnake newFood)
+      else go (State move newSnake newFood)
 
 initialState :: IO State
 initialState = do
@@ -53,13 +65,13 @@ initialState = do
   let food = (28,28)
   return (State MoveRight startSnake food)
 
-charToAction :: Char -> Action -> Action
-charToAction c oldAction = case c of
+charToMove :: Char -> Move -> Move
+charToMove c oldMove = case c of
   'w' -> MoveUp
   'a' -> MoveLeft
   's' -> MoveDown
   'd' -> MoveRight
-  _   -> oldAction
+  _   -> oldMove
 
 scale :: Int -> Frame -> Frame
 scale z frame = concatMap (replicate z) (map (concatMap (replicate z)) frame)
@@ -83,9 +95,9 @@ colorize snake food x
 
 -- Aufgabe 2
 
-moveSnake :: [Position] -> Position -> Action -> [Position]
-moveSnake xs@((x,y):_) food action = newHead : newTail
-  where newHead = case action of
+moveSnake :: [Position] -> Position -> Move -> [Position]
+moveSnake xs@((x,y):_) food move = newHead : newTail
+  where newHead = case move of
           MoveLeft  -> (x-1,y)
           MoveRight -> (x+1,y)
           MoveUp    -> (x,y-1)
@@ -93,10 +105,10 @@ moveSnake xs@((x,y):_) food action = newHead : newTail
         newTail = if newHead == food then xs
                                      else init xs
 
-validateAction :: Action -> Action -> Action
-validateAction oldAction action = if opposite action == oldAction then oldAction else action
+validateMove :: Move -> Move -> Move
+validateMove oldMove move = if opposite move == oldMove then oldMove else move
 
-opposite :: Action -> Action
+opposite :: Move -> Move
 opposite MoveLeft  = MoveRight
 opposite MoveRight = MoveLeft
 opposite MoveUp    = MoveDown
