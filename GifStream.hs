@@ -14,7 +14,6 @@ module GifStream (
 
 import System.IO
 
-import Network hiding (accept)
 import Network.Socket
 import Network.Socket.ByteString (sendAll)
 
@@ -37,7 +36,10 @@ type Logic = IO () -> IO Char -> (Frame -> IO ()) -> IO ()
 server :: PortNumber -> Int -> Logic -> IO ()
 server port delay logic = withSocketsDo $ do
   hSetBuffering stdin NoBuffering
-  sock <- listenOn $ PortNumber port
+  sock <- socket AF_INET Stream 0
+  setSocketOption sock ReuseAddr 1
+  bind sock (SockAddrInet port 0)
+  listen sock 10 -- Allow 10 concurrent users
 
   putStrLn $ "Listening on http://127.0.0.1:" ++ show port ++ "/"
 
