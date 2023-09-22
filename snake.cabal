@@ -5,7 +5,7 @@ License: BSD3
 License-File: LICENSE
 Build-Type: Simple
 Cabal-Version: >= 1.2
-Maintainer: Dennis Felsing <dennis@felsin9.de>
+Maintainer: Dennis Felsing <dennis@felsing.org>
 
 Executable snake
   Main-is: SnakeFinished.hs
